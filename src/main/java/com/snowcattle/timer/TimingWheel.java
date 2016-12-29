@@ -58,5 +58,105 @@ public class TimingWheel<E> {
 
         wheel.trimToSize();
 
+        workThread = new Thread(new TickWorker(), "wheel-timer");
+    }
+
+    public void start(){
+        if (shutdown.get()){
+            throw new IllegalStateException("the thread is stoped");
+        }
+
+        if(!workThread.isAlive()){
+            workThread.start();
+        }
+    }
+
+    public boolean stop(){
+        if(!shutdown.compareAndSet(false, true)){
+            return false;
+        }
+        boolean interrupted = false;
+        while (workThread.isAlive()){
+            workThread.interrupt();
+            try {
+                workThread.join(1000);
+            }catch (Exception e){
+                interrupted = true;
+            }
+        }
+
+        if(interrupted){
+            Thread.currentThread().interrupt();
+        }
+
+        return true;
+    }
+
+    public void addExpirationListener(ExpirationListener<E> listener){
+        expirationListeners.add(listener);
+    }
+
+    public void removeExpirationListner(ExpirationListener<E> listener){
+        expirationListeners.remove(listener);
+    }
+
+    public void add(E e){
+        synchronized (e){
+
+        }
+    }
+
+
+    private class TickWorker implements Runnable{
+
+        /**
+         * 启动时间
+         */
+        private long startTime;
+
+        /**
+         * 运行次数
+         */
+        private long tick=1L;
+
+
+        public void run() {
+            startTime = System.currentTimeMillis();
+            tick = 1;
+            for ( int i = 0; !shutdown.get();i++){
+                if(i == wheel.size()){
+                    i = 0;
+                }
+
+                lock.writeLock().lock();
+                try{
+                    currentTickIndex = i;
+                }catch (Exception e){
+
+                }finally {
+                    lock.writeLock().unlock();
+                }
+
+                waitForNexTick();
+            }
+        }
+
+        private void waitForNexTick(){
+            for (;;){
+                long currentTime = System.currentTimeMillis();
+                long sleepTime = tickDuration * tick - (currentTime - startTime);
+                if(sleepTime <= 0){
+                    break;
+                }
+
+                try {
+                    Thread.sleep(sleepTime);
+                }catch (Exception e){
+
+                }finally {
+                    break;
+                }
+            }
+        }
     }
 }
