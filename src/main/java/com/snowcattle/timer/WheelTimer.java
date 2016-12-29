@@ -59,7 +59,7 @@ public class WheelTimer<E> {
      */
     private long tickDuration;
     /**
-     * 每次需要转多少圈 l（一轮的tick数
+     * 每次需要转多少圈 l（一轮的tick数)
      */
     private int ticksPerWheel;
     private volatile int currentTickIndex = 0;
@@ -74,7 +74,7 @@ public class WheelTimer<E> {
     private ReadWriteLock lock = new ReentrantReadWriteLock();
     private Thread workThread;
 
-    public WheelTimer(int tickDuration, int ticksPerWheel, TimeUnit timeUnit) {
+    public WheelTimer(int tickDuration, TimeUnit timeUnit, int ticksPerWheel) {
         if (timeUnit == null) {
             throw new NullPointerException("time unit");
         }
@@ -84,7 +84,7 @@ public class WheelTimer<E> {
         }
 
         this.wheel = new ArrayList<TimeSlot<E>>();
-        this.tickDuration = TimeUnit.MICROSECONDS.convert(tickDuration, timeUnit);
+        this.tickDuration = TimeUnit.MILLISECONDS.convert(tickDuration, timeUnit);
         this.ticksPerWheel = ticksPerWheel;
         for (int i = 0; i < this.ticksPerWheel; i++) {
             wheel.add(new TimeSlot<E>(i));
@@ -138,6 +138,7 @@ public class WheelTimer<E> {
         synchronized (e) {
             checkAdd(e);
             int previousTickIndex = getPreviousTickIndex();
+            System.out.println("放入索引" + previousTickIndex);
             TimeSlot<E> timeSlotSet = wheel.get(previousTickIndex);
             timeSlotSet.add(e);
             indicator.put(e, timeSlotSet);
@@ -158,6 +159,8 @@ public class WheelTimer<E> {
     }
 
     public void notifyExpired(int idx) {
+
+
         TimeSlot<E> timeSlot = wheel.get(idx);
         Set<E> elements = timeSlot.getElements();
         for (E e : elements) {
@@ -170,6 +173,7 @@ public class WheelTimer<E> {
             }
 
             for (ExpirationListener<E> listener : expirationListeners) {
+                System.out.println("过期索引"+ idx);
                 listener.expired(e);
             }
         }
