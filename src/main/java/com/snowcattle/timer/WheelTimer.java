@@ -138,7 +138,7 @@ public class WheelTimer<E> {
         synchronized (e) {
             checkAdd(e);
             int previousTickIndex = getPreviousTickIndex();
-            System.out.println("放入索引" + previousTickIndex);
+//            System.out.println("放入索引" + previousTickIndex);
             TimeSlot<E> timeSlotSet = wheel.get(previousTickIndex);
             timeSlotSet.add(e);
             indicator.put(e, timeSlotSet);
@@ -173,7 +173,7 @@ public class WheelTimer<E> {
             }
 
             for (ExpirationListener<E> listener : expirationListeners) {
-                System.out.println("过期索引"+ idx);
+//                System.out.println("过期索引"+ idx);
                 listener.expired(e);
             }
         }
